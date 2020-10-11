@@ -1,7 +1,7 @@
 extern crate gtk;
 
 use gtk::prelude::*;
-use terra::{initialize::*};
+use terra::{initialize::*, util::html_parse};
 // use terra::ui_util::*;
 use terra::http::*;
 
@@ -40,7 +40,8 @@ fn main() {
         |items| {
             listbox.set_size_request(200, 200);
             for toot in items {
-                let label = gtk::Label::new(Some((toot.content).as_ref()));
+                let text = html_parse::html_to_text(toot.content.as_ref());
+                let label = gtk::Label::new(Some((text).as_ref()));
                 label.set_halign(gtk::Align::Start);
                 label.set_line_wrap(true);
                 let r = gtk::ListBoxRow::new();
