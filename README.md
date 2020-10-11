@@ -38,12 +38,13 @@ rustup default nightly-x86_64-pc-windows-gnu
 cargo run
 ```
 
-### 開発
 
 
+# その他
+
+- 初回登録画面ができてないので設定ファイルに手動で書き込んでね状態です。
 - このアプリと関係ないですが、cargo install cargo-editを入れときましょう
 - /mingw64/bin/glade で画面を作成
-
 
 # 参考リンク
 
