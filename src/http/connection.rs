@@ -39,7 +39,17 @@ pub fn register_client(host: &str) -> Result<ClientRegisterResponse, Box<dyn std
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Toot {
-    pub content: String
+    pub id: String,
+    pub content: String,
+    pub account: Account
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Account {
+    pub id: String,
+    pub username: String,
+    pub acct: String,
+    pub display_name: String,
 }
 
 pub fn get_toot(host: &String, access_token: &String) -> Result<Vec<Toot>, Box<dyn std::error::Error>> {

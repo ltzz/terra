@@ -36,16 +36,29 @@ fn main() {
     let listbox : gtk::ListBox = builder.get_object("listbox").unwrap();
     let toots = dbg!(toots);
 
-    toots.unwrap().unwrap().map(
+    let _ = toots.unwrap().unwrap().map(
         |items| {
             listbox.set_size_request(200, 200);
             for toot in items {
+                
+                // let display_name = gtk::Entry::new();
+                // display_name.set_text(toot.account.display_name.as_ref());
+
+                let display_name = gtk::Label::new(Some((toot.account.display_name).as_ref()));
+                display_name.set_halign(gtk::Align::Start);
+                display_name.set_line_wrap(true);
+
                 let text = html_parse::html_to_text(toot.content.as_ref());
-                let label = gtk::Label::new(Some((text).as_ref()));
-                label.set_halign(gtk::Align::Start);
-                label.set_line_wrap(true);
+                let clabel = gtk::Label::new(Some((text).as_ref()));
+                clabel.set_halign(gtk::Align::Start);
+                clabel.set_line_wrap(true);
+
+                let hbox : gtk::Box = gtk::Box::new(gtk::Orientation::Horizontal, 0);
+                hbox.pack_start(&display_name, true, true, 0);
+                hbox.pack_start(&clabel, true, true, 0);
+
                 let r = gtk::ListBoxRow::new();
-                r.add(&label);
+                r.add(&hbox);
                 listbox.prepend(&r);
             }
             listbox.show_all();
