@@ -41,7 +41,8 @@ cargo run
 ### 開発
 
 
-/mingw64/bin/glade で画面を作成
+- このアプリと関係ないですが、cargo install cargo-editを入れときましょう
+- /mingw64/bin/glade で画面を作成
 
 
 # 参考リンク
