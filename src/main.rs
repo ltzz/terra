@@ -32,7 +32,24 @@ fn main() {
         )
     });
 
+
+    let listbox : gtk::ListBox = builder.get_object("listbox").unwrap();
     let toots = dbg!(toots);
+
+    toots.unwrap().unwrap().map(
+        |items| {
+            listbox.set_size_request(200, 200);
+            for toot in items {
+                let label = gtk::Label::new(Some((toot.content).as_ref()));
+                label.set_halign(gtk::Align::Start);
+                label.set_line_wrap(true);
+                let r = gtk::ListBoxRow::new();
+                r.add(&label);
+                listbox.prepend(&r);
+            }
+            listbox.show_all();
+        }
+    );
 
     gtk::main();
 }
