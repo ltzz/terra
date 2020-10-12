@@ -6,6 +6,9 @@ use crate::{
 pub fn get_toots(
     instance_setting: &InstanceSetting,
 ) -> Result<Vec<Toot>, Box<dyn std::error::Error>> {
-    let toots = connection::get_toot(&instance_setting.host_name, &instance_setting.access_token);
+    let toots = connection::get_toot(
+        &instance_setting.host_name,
+        &instance_setting.access_token
+    );
     toots
 }
