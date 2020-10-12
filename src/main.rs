@@ -1,7 +1,7 @@
 extern crate gtk;
 
 use gtk::prelude::*;
-use terra::{initialize::*, util::html_parse};
+use terra::{initialize::*, timeline::htl::get_toots, util::html_parse};
 // use terra::ui_util::*;
 use terra::http::*;
 
@@ -21,21 +21,7 @@ fn main() {
 
     let setting = initialize::initialize();
 
-    let array = setting.map(|op| op.instance_settings);
-
-    // let array = dbg!(array);
-    let toots = 
-    array.map(|iss| {
-        iss.get(0).map(|is|
-            connection::get_toot(&is.host_name,
-                &is.access_token)
-        )
-    });
-
-
     let listbox: gtk::ListBox = builder.get_object("listbox").unwrap();
-    let toots = dbg!(toots);
-
 
     let load_button: gtk::Button = builder.get_object("load_button").unwrap();
     load_button.connect_button_release_event(|_, _| {
@@ -43,7 +29,13 @@ fn main() {
         gtk::Inhibit(false)
     });
 
-
+    let toots = setting.map(|op| 
+        op.instance_settings.get(0)
+        .map(|is|
+            get_toots(is)
+        )
+    );
+    
     let _ = toots.unwrap().unwrap().map(
         |items| {
             listbox.set_size_request(200, 200);
