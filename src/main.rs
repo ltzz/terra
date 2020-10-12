@@ -33,8 +33,16 @@ fn main() {
     });
 
 
-    let listbox : gtk::ListBox = builder.get_object("listbox").unwrap();
+    let listbox: gtk::ListBox = builder.get_object("listbox").unwrap();
     let toots = dbg!(toots);
+
+
+    let load_button: gtk::Button = builder.get_object("load_button").unwrap();
+    load_button.connect_button_release_event(|_, _| {
+        // TODO
+        gtk::Inhibit(false)
+    });
+
 
     let _ = toots.unwrap().unwrap().map(
         |items| {
