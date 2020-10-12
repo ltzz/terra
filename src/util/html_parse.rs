@@ -4,7 +4,7 @@ use scraper::{Html, Selector};
 pub fn html_to_text( html_str : &str) -> String {
     let fragment = Html::parse_fragment(html_str);
     
-    let css = "p"; // FIXME: pタグ関係なくテキスト化
+    let css = "*"; // FIXME: このままだと重複して取ってしまう テキスト化をなんとかする
     let selector = Selector::parse(css).unwrap();
 
 
