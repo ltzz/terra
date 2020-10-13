@@ -63,22 +63,24 @@ impl App {
 
         let data: Data = Data { articles: articles };
 
+        fn to_label(text: &str) -> gtk::Label {
+          let label = gtk::Label::new(Some(text));
+          label.set_halign(gtk::Align::Start);
+          label.set_line_wrap(true);
+          label
+        }
         let _ = data.articles.iter().for_each(|article| {
             // let display_name = gtk::Entry::new();
             // display_name.set_text(toot.account.display_name.as_ref());
 
             let username = (article.username).as_ref();
-            let display_name = gtk::Label::new(Some(username));
-            display_name.set_halign(gtk::Align::Start);
-            display_name.set_line_wrap(true);
+            let dlabel = to_label(username);
 
             let text = (article.description).as_ref();
-            let clabel = gtk::Label::new(Some(text));
-            clabel.set_halign(gtk::Align::Start);
-            clabel.set_line_wrap(true);
+            let clabel = to_label(text);
 
             let hbox: gtk::Box = gtk::Box::new(gtk::Orientation::Horizontal, 0);
-            hbox.pack_start(&display_name, true, true, 0);
+            hbox.pack_start(&dlabel, true, true, 0);
             hbox.pack_start(&clabel, true, true, 0);
 
             let r = gtk::ListBoxRow::new();
