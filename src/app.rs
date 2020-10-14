@@ -9,7 +9,7 @@ use gtk::prelude::*;
 
 pub struct InnerApp {
     pub articles: Vec<Article>,
-    pub listbox: Rc<gtk::ListBox>,
+    pub treeview: Rc<gtk::TreeView>,
     pub window: gtk::Window,
     pub builder: gtk::Builder,
     pub setting: Rc<Setting>
@@ -22,6 +22,22 @@ pub struct Article {
 
 pub struct App {
     data: InnerApp
+}
+
+const USERNAME_COL: u8 = 0;
+const DESCRIPTION_COL: u8 = 1;
+
+fn create_model(articles: Vec<Article>) -> gtk::ListStore {
+  let column_types   = [gtk::Type::String, gtk::Type::String];
+  let store = gtk::ListStore::new(&column_types);
+  
+  let _ = articles.iter().for_each(|article| {
+    let iter = store.insert(-1);
+    store.set_value(&iter, USERNAME_COL.into(), &article.username.to_value() as &gtk::Value);
+    store.set_value(&iter, DESCRIPTION_COL.into(), &article.description.to_value() as &gtk::Value);
+  });
+
+  store
 }
 
 impl App {
@@ -37,7 +53,27 @@ impl App {
         let ui = include_str!("layout/main.ui");
         let builder = gtk::Builder::new_from_string(ui);
 
-        let listbox: gtk::ListBox = builder.get_object("listbox").unwrap();
+        let treeview: gtk::TreeView = builder.get_object("treeview").unwrap();
+
+        let name_column_num: u16 = 0;
+        let description_column_num: u16 = 1;
+
+        let name_column   = gtk::TreeViewColumn::new();
+        name_column.set_title("Username");
+        
+        let cell_renderer = gtk::CellRendererText::new();
+        name_column.pack_start(&cell_renderer, true);
+        name_column.add_attribute(&cell_renderer, "text", name_column_num.into());
+
+        let description_column   = gtk::TreeViewColumn::new();
+        description_column.set_title("Description");
+
+        let cell_renderer = gtk::CellRendererText::new();
+        description_column.pack_start(&cell_renderer, true);
+        description_column.add_attribute(&cell_renderer, "text", description_column_num.into());
+
+        treeview.append_column(&name_column);
+        treeview.append_column(&description_column);
         
         let window: gtk::Window = builder.get_object("main_window").unwrap();
         window.connect_delete_event(move |_, _| {
@@ -49,12 +85,12 @@ impl App {
 
         let load_button: gtk::Button = builder.get_object("load_button").unwrap();
 
-        let data = InnerApp{articles, listbox: Rc::new(listbox), window, builder, setting: Rc::new(setting) };
+        let data = InnerApp{articles, treeview: Rc::new(treeview), window, builder, setting: Rc::new(setting) };
 
         let setting = data.setting.clone();
-        let listbox = data.listbox.clone();
+        let treeview = data.treeview.clone();
         load_button.connect_button_release_event(move |_, _| {
-          reload(&setting, &listbox);
+          reload(&setting, &treeview);
             gtk::Inhibit(false)
         });
 
@@ -69,7 +105,7 @@ impl App {
     }
 }
 
-fn reload(setting: &Setting, listbox: &gtk::ListBox) {
+fn reload(setting: &Setting, treeview: &gtk::TreeView) {
   let is = setting.instance_settings.get(0).map(|is|is);
   let toots = is.map(|is| get_toots(is));
 
@@ -83,33 +119,8 @@ fn reload(setting: &Setting, listbox: &gtk::ListBox) {
       })
       .collect();
 
-  fn to_label(text: &str) -> gtk::Label {
-    let label = gtk::Label::new(Some(text));
-    label.set_halign(gtk::Align::Start);
-    label.set_line_wrap(true);
-    label
-  }
+  treeview.set_model(Some(&create_model(articles)));
 
-  let _ = articles.iter().for_each(|article| {
-      // let display_name = gtk::Entry::new();
-      // display_name.set_text(toot.account.display_name.as_ref());
-
-      let username = (article.username).as_ref();
-      let dlabel = to_label(username);
-
-      let text = (article.description).as_ref();
-      let clabel = to_label(text);
-
-      let hbox: gtk::Box = gtk::Box::new(gtk::Orientation::Horizontal, 0);
-      hbox.pack_start(&dlabel, true, true, 0);
-      hbox.pack_start(&clabel, true, true, 0);
-
-      // FIXME: リスト追加時の重複除去
-      let r = gtk::ListBoxRow::new();
-      r.add(&hbox);
-      listbox.prepend(&r);
-  });
-
-  listbox.set_size_request(200, 200);
-  listbox.show_all();
+  treeview.set_size_request(200, 200);
+  treeview.show_all();
 }
