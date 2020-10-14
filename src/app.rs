@@ -1,5 +1,5 @@
 extern crate gtk;
-
+use std::{cell::RefCell, collections::BTreeMap};
 use std::{rc::Rc};
 
 use crate::initialize::initialize::Setting;
@@ -8,7 +8,7 @@ use super::{initialize::*, timeline::htl::get_toots, util::html_parse};
 use gtk::prelude::*;
 
 pub struct InnerApp {
-    pub articles: Vec<Article>,
+    pub articles: Rc<RefCell<BTreeMap<String, Article>>>,
     pub treeview: Rc<gtk::TreeView>,
     pub window: gtk::Window,
     pub builder: gtk::Builder,
@@ -16,6 +16,7 @@ pub struct InnerApp {
 }
 
 pub struct Article {
+    pub id: String,
     pub username: String,
     pub description: String,
 }
@@ -27,7 +28,7 @@ pub struct App {
 const USERNAME_COL: u8 = 0;
 const DESCRIPTION_COL: u8 = 1;
 
-fn create_model(articles: Vec<Article>) -> gtk::ListStore {
+fn create_model(articles: Vec<&Article>) -> gtk::ListStore {
   let column_types   = [gtk::Type::String, gtk::Type::String];
   let store = gtk::ListStore::new(&column_types);
   
@@ -46,7 +47,7 @@ impl App {
 
         gtk::init().expect("Failed to initialize GTK.");
 
-        let articles = Vec::new();
+        let mut articles = BTreeMap::new();
 
         let setting = initialize::initialize().ok().unwrap();
 
@@ -85,12 +86,13 @@ impl App {
 
         let load_button: gtk::Button = builder.get_object("load_button").unwrap();
 
-        let data = InnerApp{articles, treeview: Rc::new(treeview), window, builder, setting: Rc::new(setting) };
+        let data = InnerApp{articles: Rc::new(RefCell::new(articles)), treeview: Rc::new(treeview), window, builder, setting: Rc::new(setting) };
 
         let setting = data.setting.clone();
         let treeview = data.treeview.clone();
+        let articles = data.articles.clone();
         load_button.connect_button_release_event(move |_, _| {
-          reload(&setting, &treeview);
+          reload(&setting, &treeview, &mut *articles.borrow_mut());
             gtk::Inhibit(false)
         });
 
@@ -105,21 +107,26 @@ impl App {
     }
 }
 
-fn reload(setting: &Setting, treeview: &gtk::TreeView) {
+fn reload(setting: &Setting, treeview: &gtk::TreeView, articles: &mut BTreeMap<String, Article>) {
   let is = setting.instance_settings.get(0).map(|is|is);
   let toots = is.map(|is| get_toots(is));
 
-  let articles: Vec<Article> = toots
+  let fetched_articles: Vec<Article> = toots
       .unwrap()
       .unwrap()
       .into_iter()
       .map(|t| Article {
+          id: t.id,
           username: t.account.display_name.clone(),
           description: html_parse::html_to_text(t.content.as_ref()).clone(),
       })
       .collect();
+  
+    fetched_articles.into_iter().for_each({|article| {
+      let _= articles.insert(String::from(&article.id), article);
+    }});
 
-  treeview.set_model(Some(&create_model(articles)));
+  treeview.set_model(Some(&create_model(articles.values().rev().collect())));
 
   treeview.set_size_request(200, 200);
   treeview.show_all();
