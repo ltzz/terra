@@ -5,6 +5,7 @@ use std::{rc::Rc};
 use crate::initialize::initialize::Setting;
 
 use super::{initialize::*, timeline::htl::get_toots, util::html_parse};
+use crate::http::connection::post_status;
 use gtk::prelude::*;
 
 pub struct InnerApp {
@@ -12,7 +13,8 @@ pub struct InnerApp {
     pub treeview: Rc<gtk::TreeView>,
     pub window: gtk::Window,
     pub builder: gtk::Builder,
-    pub setting: Rc<Setting>
+    pub setting: Rc<Setting>,
+    pub input_text: Rc<gtk::Entry>,
 }
 
 pub struct Article {
@@ -85,15 +87,33 @@ impl App {
         window.show_all();
 
         let load_button: gtk::Button = builder.get_object("load_button").unwrap();
+        let post_button: gtk::Button = builder.get_object("post_button").unwrap();
 
-        let data = InnerApp{articles: Rc::new(RefCell::new(articles)), treeview: Rc::new(treeview), window, builder, setting: Rc::new(setting) };
+        
+        let input_text: gtk::Entry = builder.get_object("input_text").unwrap();
+
+        let data = InnerApp{
+          articles: Rc::new(RefCell::new(articles)),
+          treeview: Rc::new(treeview),
+          window, builder,
+          setting: Rc::new(setting),
+          input_text: Rc::new(input_text)
+        };
 
         let setting = data.setting.clone();
         let treeview = data.treeview.clone();
         let articles = data.articles.clone();
+
         load_button.connect_button_release_event(move |_, _| {
           reload(&setting, &treeview, &mut *articles.borrow_mut());
-            gtk::Inhibit(false)
+          gtk::Inhibit(false)
+        });
+
+        let setting = data.setting.clone();
+        let input_text = data.input_text.clone();
+        post_button.connect_button_release_event(move |_, _| {
+          post(&setting, &input_text);
+          gtk::Inhibit(false)
         });
 
         Self { data: data }
@@ -105,6 +125,12 @@ impl App {
 
         self
     }
+}
+
+fn post(setting: &Setting, input_text: &gtk::Entry){
+  let is = setting.instance_settings.get(0).map(|is|is);
+  let input_value = input_text.get_text().unwrap();
+  let _result = is.map(|is| post_status(&is.host_name, &is.access_token, &String::from(input_value)));
 }
 
 fn reload(setting: &Setting, treeview: &gtk::TreeView, articles: &mut BTreeMap<String, Article>) {

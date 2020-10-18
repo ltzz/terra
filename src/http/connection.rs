@@ -1,6 +1,8 @@
 const CLIENT_NAME: &str = "test";
 
 use serde::{Deserialize, Serialize};
+use percent_encoding::utf8_percent_encode;
+use percent_encoding::NON_ALPHANUMERIC;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClientRegisterResponse {
@@ -51,6 +53,36 @@ pub struct Account {
     pub acct: String,
     pub display_name: String,
 }
+
+pub fn post_status(host: &String, access_token: &String, status: &String) -> Result<Vec<Toot>, Box<dyn std::error::Error>> {
+    let url = format!(
+        "https://{}/api/v1/statuses",
+        host
+    );
+
+    let status_encoded = utf8_percent_encode(status, NON_ALPHANUMERIC).to_string();
+    let body = dbg!("status=".to_owned() + &status_encoded);
+
+    let client = reqwest::blocking::Client::new();
+
+    let auth_value = format!(
+        "Bearer {}",
+        access_token
+    );
+
+    let url = dbg!(url);
+
+    let resp = client.post(&url)
+            .header("Authorization", auth_value)
+            .body(body)
+            .send()?;
+
+    let body = resp.text()?;
+
+    let ret: Vec<Toot> = serde_json::from_str(&body)?;
+    Ok(ret)
+}
+
 
 pub fn get_toot(host: &String, access_token: &String) -> Result<Vec<Toot>, Box<dyn std::error::Error>> {
     let url = format!(
